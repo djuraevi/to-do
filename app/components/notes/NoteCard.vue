@@ -1,17 +1,17 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useNotesStore } from '~/stores/notes'
+import BaseModal from '~/components/ui/BaseModal.vue'
 import type { Note } from '~/types/note'
-import TodoList from '~/components/notes/TodoList.vue'
+import TodoList from "~/components/notes/TodoList.vue";
 
-const props = defineProps<{
-  note: Note
-}>()
+const props = defineProps<{ note: Note }>()
+const store = useNotesStore()
 
-const notesStore = useNotesStore()
+const showDeleteModal = ref(false)
 
-
-const removeNote = () => {
-  notesStore.deleteNote(props.note.id)
+const confirmDelete = () => {
+  store.deleteNote(props.note.id)
 }
 </script>
 
@@ -21,9 +21,22 @@ const removeNote = () => {
 
     <TodoList :todos="note.todos" />
 
-    <div class="actions">
-      <NuxtLink class="button button-primary" :to="`/notes/${note.id}`">Редактировать</NuxtLink>
-      <button class="button button-danger" type="button" @click="removeNote">Удалить</button>
+    <div class="card-action">
+      <NuxtLink class="btn btn--secondary" :to="`/notes/${note.id}`">Редактировать</NuxtLink>
+      <button
+          class="btn btn--delete"
+          @click="showDeleteModal = true"
+      >
+        Удалить
+      </button>
+
+      <BaseModal
+          v-model="showDeleteModal"
+          :title="note.title"
+          @confirm="confirmDelete"
+      >
+        Вы действительно хотите удалить эту заметку?
+      </BaseModal>
     </div>
   </article>
 </template>

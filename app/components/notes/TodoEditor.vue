@@ -1,46 +1,45 @@
 <script setup lang="ts">
-import type { Todo } from "~/types/note";
+import type { Todo } from '~/types/note'
 
-defineProps<{
-  todos: Todo[]
-}>()
+defineProps<{ todos: Todo[] }>()
 
 const emit = defineEmits<{
-  (e: 'add'): void
+  (e: 'add-todo'): void
   (e: 'remove', id: string): void
+  (e: 'update-text', payload: { id: string; text: string }): void
+  (e: 'toggle', id: string): void
 }>()
 </script>
 
 <template>
-  <div>
-    <h3>Todo list</h3>
-
+  <div class="todo-editor">
     <div
         v-for="todo in todos"
         :key="todo.id"
-        class="card"
-        style="display:flex; gap:10px; align-items:center;"
+        class="todo-editor__item"
     >
-      <input type="checkbox" v-model="todo.completed" />
+      <input
+          type="checkbox"
+          class="ui-checkbox"
+          :checked="todo.completed"
+          @change="emit('toggle', todo.id)"
+      />
 
       <input
           class="input"
-          v-model="todo.text"
-          placeholder="Todo text"
+          :value="todo.text"
+          @input="emit('update-text', { id: todo.id, text: $event.target.value })"
       />
 
       <button
-          class="button button-danger"
+          class="btn btn--delete"
           @click="emit('remove', todo.id)"
       >
         Удалить
       </button>
     </div>
 
-    <button
-        class="button button-ghost"
-        @click="emit('add')"
-    >
+    <button class="btn btn--primary" @click="emit('add-todo')">
       + Добавить пункт
     </button>
   </div>

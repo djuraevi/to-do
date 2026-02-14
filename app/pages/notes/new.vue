@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Breadcrumbs from '~/components/ui/Breadcrumbs.vue'
+import PageHeader from '~/components/layout/PageHeader.vue'
 import NoteForm from '~/components/notes/NoteForm.vue'
 import { useNoteForm } from '~/composables/useNoteForm'
 
@@ -8,30 +8,30 @@ const {
   todos,
   addTodo,
   removeTodo,
+  updateTodoText,
+  toggleTodo,
   save,
   cancel
 } = useNoteForm()
-
-const crumbs = [
+const breadcrumbs = [
   { label: 'Главная', to: '/' },
   { label: 'Новая заметка' }
 ]
+
 </script>
 
 <template>
-  <div class="container">
-    <Breadcrumbs :items="crumbs" />
+  <PageHeader title="Создание заметки" :breadcrumbs />
 
-    <h1>Создание заметки</h1>
-
-    <NoteForm
-        :title="title"
-        :todos="todos"
-        @update:title="title = $event"
-        @add-todo="addTodo"
-        @remove-todo="removeTodo"
-        @save="save"
-        @cancel="cancel"
-    />
-  </div>
+  <NoteForm
+      :title="title"
+      :todos="todos"
+      @update:title="val => title = val"
+      @add-todo="addTodo"
+      @remove-todo="removeTodo"
+      @update-todo-text="updateTodoText"
+      @toggle-todo="toggleTodo"
+      @save="save"
+      @cancel="cancel"
+  />
 </template>

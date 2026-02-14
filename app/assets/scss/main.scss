@@ -1,7 +1,12 @@
 @use 'ui/button';
 @use 'ui/intput';
+@use "ui/card";
+@use "ui/modal";
 
-* {
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -16,28 +21,116 @@ ul, ol {
 }
 body {
   font-family: "IBM Plex Mono", monospace;
-  background: #FFFFFF;
+  background: #e8e8e8;
 }
 
 .container {
   width: 100%;
+  height: 100vh;
   max-width: 1200px;
   margin: 0 auto;
 
-  padding-left: 16px;
-  padding-right: 16px;
+  padding: 1rem;
 }
 
 @media (min-width: 768px) {
   .container {
-    padding-left: 24px;
-    padding-right: 24px;
+    padding: 1.5rem;
   }
 }
 
 @media (min-width: 1024px) {
   .container {
-    padding-left: 32px;
-    padding-right: 32px;
+    padding: 2rem;
   }
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  &-title {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .btn {
+    width: max-content;
+  }
+}
+
+
+.note-list {
+  margin-top: 2rem;
+  &--void {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+  }
+  & h2 {
+    text-align: center;
+  }
+}
+
+.notes-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  margin-top: 1.5rem;
+}
+
+.note-form {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.note-form__section {
+  background: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.note-form__subtitle {
+  margin-bottom: 16px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.note-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.note-form__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.todo-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.todo-editor__item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  .btn {
+    width: max-content;
+  }
+}
+
+.todo-editor__input {
+  flex: 1;
+}
+
+.todo-editor__add {
+  align-self: flex-start;
 }

@@ -1,60 +1,94 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, watch, toRaw } from 'vue'
 import type { Note } from '~/types/note'
+
+const MAX_HISTORY = 50
 
 export const useNotesStore = defineStore('notes', () => {
     const notes = ref<Note[]>([])
+    const history = ref<Note[][]>([])
+    const future = ref<Note[][]>([])
 
-    const addNote = (title: string) => {
-        notes.value.push({
-            id: crypto.randomUUID(),
-            title,
-            todos: []
-        })
+    const loadFromStorage = () => {
+        if (!import.meta.client) return
+
+        const saved = localStorage.getItem('notes')
+        if (saved) {
+            notes.value = JSON.parse(saved)
+        }
+    }
+
+    loadFromStorage()
+
+    watch(
+        notes,
+        () => {
+            if (!import.meta.client) return
+            localStorage.setItem('notes', JSON.stringify(toRaw(notes.value)))
+        },
+        { deep: true }
+    )
+
+    const snapshot = () => {
+        const cloned = structuredClone(toRaw(notes.value))
+
+        const last =
+            history.value.length > 0
+                ? history.value[history.value.length - 1]
+                : null
+
+        if (JSON.stringify(cloned) === JSON.stringify(last)) return
+
+        history.value.push(cloned)
+
+        if (history.value.length > MAX_HISTORY) {
+            history.value.shift()
+        }
+
+        future.value = []
+    }
+
+    const undo = () => {
+        if (!history.value.length) return
+
+        future.value.push(structuredClone(toRaw(notes.value)))
+        notes.value = history.value.pop()!
+    }
+
+    const redo = () => {
+        if (!future.value.length) return
+
+        history.value.push(structuredClone(toRaw(notes.value)))
+        notes.value = future.value.pop()!
+    }
+
+    const createNote = (note: Note) => {
+        snapshot()
+        notes.value.push(structuredClone(note))
+    }
+
+    const replaceNote = (id: string, newNote: Note) => {
+        const index = notes.value.findIndex(n => n.id === id)
+        if (index === -1) return
+
+        snapshot()
+        notes.value[index] = structuredClone(newNote)
     }
 
     const deleteNote = (id: string) => {
-        notes.value = notes.value.filter(n => n.id !== id)
-    }
+        const index = notes.value.findIndex(n => n.id === id)
+        if (index === -1) return
 
-    const updateNote = (id: string, title: string) => {
-        const note = notes.value.find(n => n.id === id)
-        if (note) note.title = title
-    }
-
-    const addTodo = (noteId: string, text: string) => {
-        const note = notes.value.find(n => n.id === noteId)
-        if (!note) return
-
-        note.todos.push({
-            id: crypto.randomUUID(),
-            text,
-            completed: false
-        })
-    }
-
-    const toggleTodo = (noteId: string, todoId: string) => {
-        const note = notes.value.find(n => n.id === noteId)
-        if (!note) return
-
-        const todo = note.todos.find(t => t.id === todoId)
-        if (todo) todo.completed = !todo.completed
-    }
-
-    const deleteTodo = (noteId: string, todoId: string) => {
-        const note = notes.value.find(n => n.id === noteId)
-        if (!note) return
-
-        note.todos = note.todos.filter(t => t.id !== todoId)
+        snapshot()
+        notes.value.splice(index, 1)
     }
 
     return {
         notes,
-        addNote,
+        createNote,
+        replaceNote,
         deleteNote,
-        updateNote,
-        addTodo,
-        toggleTodo,
-        deleteTodo
+        undo,
+        redo
     }
 })

@@ -7,10 +7,11 @@ export const useNoteForm = (initialNote?: Note) => {
     const router = useRouter()
     const notesStore = useNotesStore()
 
-    const title = ref(initialNote?.title || '')
+    const title = ref(initialNote?.title ?? '')
+
     const todos = ref(
         initialNote
-            ? JSON.parse(JSON.stringify(initialNote.todos))
+            ? structuredClone(toRaw(initialNote.todos))
             : [
                 {
                     id: crypto.randomUUID(),
@@ -32,22 +33,33 @@ export const useNoteForm = (initialNote?: Note) => {
         todos.value = todos.value.filter(t => t.id !== id)
     }
 
+    const updateTodoText = (payload: { id: string; text: string }) => {
+        const todo = todos.value.find(t => t.id === payload.id)
+        if (!todo) return
+        todo.text = payload.text
+    }
+
+    const toggleTodo = (id: string) => {
+        const todo = todos.value.find(t => t.id === id)
+        if (!todo) return
+        todo.completed = !todo.completed
+    }
+
     const save = () => {
         if (!title.value.trim()) return
 
-        if (initialNote) {
-            notesStore.updateNote(initialNote.id, title.value)
+        const prepared: Note = {
+            id: initialNote?.id ?? crypto.randomUUID(),
+            title: title.value.trim(),
+            todos: structuredClone(
+                toRaw(todos.value).filter(t => t.text.trim())
+            )
+        }
 
-            const note = notesStore.notes.find(n => n.id === initialNote.id)
-            if (note) {
-                note.todos = todos.value.filter(t => t.text.trim() !== '')
-            }
+        if (initialNote) {
+            notesStore.replaceNote(initialNote.id, prepared)
         } else {
-            notesStore.notes.push({
-                id: crypto.randomUUID(),
-                title: title.value,
-                todos: todos.value.filter(t => t.text.trim() !== '')
-            })
+            notesStore.createNote(prepared)
         }
 
         router.push('/')
@@ -62,6 +74,8 @@ export const useNoteForm = (initialNote?: Note) => {
         todos,
         addTodo,
         removeTodo,
+        updateTodoText,
+        toggleTodo,
         save,
         cancel
     }
