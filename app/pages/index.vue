@@ -1,11 +1,20 @@
 <script setup lang="ts">
+import NoteList from "~/components/notes/NoteList.vue";
+import PageHeader from "~/components/layout/PageHeader.vue";
 
+const breadcrumbs = [
+  { label: 'Главная', to: '/' }
+]
 </script>
 
 <template>
-<h1>hell</h1>
+  <PageHeader
+      title="Заметки"
+      :breadcrumbs
+      :action="{
+          label: '+ Создание заметки',
+          to: '/notes/new'
+        }"
+  />
+  <NoteList />
 </template>
-
-<style scoped>
-
-</style>
