@@ -12,5 +12,10 @@ export default defineNuxtConfig({
         }
     },
     modules: ['@pinia/nuxt'],
-    css: ['~/assets/scss/main.scss']
+    css: ['~/assets/scss/main.scss'],
+    vite: {
+        optimizeDeps: {
+            force: true
+        }
+    }
 })

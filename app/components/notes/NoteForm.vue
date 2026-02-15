@@ -3,9 +3,10 @@ import TodoEditor from './TodoEditor.vue'
 import BaseModal from '~/components/ui/BaseModal.vue'
 import type { Todo } from '~/types/note'
 
-const props = defineProps<{
+defineProps<{
   title: string
   todos: Todo[]
+  error: string | null
 }>()
 
 const emit = defineEmits<{
@@ -16,6 +17,8 @@ const emit = defineEmits<{
   (e: 'toggle-todo', id: string): void
   (e: 'save'): void
   (e: 'cancel'): void
+  (e: 'undo'): void
+  (e: 'redo'): void
 }>()
 
 const showCancelModal = ref(false)
@@ -27,16 +30,25 @@ const confirmCancel = () => {
 
 <template>
   <div class="note-form">
+    <div class="note-form__actions">
+      <button class="btn btn--secondary" @click="emit('undo')">Undo</button>
+      <button class="btn btn--secondary" @click="emit('redo')">Redo</button>
+    </div>
 
     <div class="note-form__section">
       <h2>Основная информация</h2>
 
       <input
           class="input"
+          :class="{ 'input--error': error }"
           :value="title"
           @input="emit('update:title', $event.target.value)"
           placeholder="Название заметки"
       />
+
+      <p v-if="error" class="error-text">
+        {{ error }}
+      </p>
     </div>
 
     <div class="note-form__section">

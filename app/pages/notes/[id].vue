@@ -22,10 +22,13 @@ watchEffect(() => {
 const {
   title,
   todos,
+  errorMessage,
   addTodo,
   removeTodo,
   updateTodoText,
   toggleTodo,
+  undo,
+  redo,
   save,
   cancel
 } = useNoteForm(note.value)
@@ -42,7 +45,10 @@ const breadcrumbs = computed(() => [
   <NoteForm
       :title="title"
       :todos="todos"
+      :error="errorMessage"
       @update:title="val => title = val"
+      @undo="undo"
+      @redo="redo"
       @add-todo="addTodo"
       @remove-todo="removeTodo"
       @update-todo-text="updateTodoText"

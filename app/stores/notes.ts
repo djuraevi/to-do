@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, watch, toRaw } from 'vue'
+import { ref, watch } from 'vue'
 import type { Note } from '~/types/note'
 
 const MAX_HISTORY = 50
@@ -8,6 +8,9 @@ export const useNotesStore = defineStore('notes', () => {
     const notes = ref<Note[]>([])
     const history = ref<Note[][]>([])
     const future = ref<Note[][]>([])
+
+    const clone = <T>(data: T): T =>
+        JSON.parse(JSON.stringify(data))
 
     const loadFromStorage = () => {
         if (!import.meta.client) return
@@ -24,18 +27,14 @@ export const useNotesStore = defineStore('notes', () => {
         notes,
         () => {
             if (!import.meta.client) return
-            localStorage.setItem('notes', JSON.stringify(toRaw(notes.value)))
+            localStorage.setItem('notes', JSON.stringify(notes.value))
         },
         { deep: true }
     )
 
     const snapshot = () => {
-        const cloned = structuredClone(toRaw(notes.value))
-
-        const last =
-            history.value.length > 0
-                ? history.value[history.value.length - 1]
-                : null
+        const cloned = clone(notes.value)
+        const last = history.value[history.value.length - 1]
 
         if (JSON.stringify(cloned) === JSON.stringify(last)) return
 
@@ -51,20 +50,20 @@ export const useNotesStore = defineStore('notes', () => {
     const undo = () => {
         if (!history.value.length) return
 
-        future.value.push(structuredClone(toRaw(notes.value)))
+        future.value.push(clone(notes.value))
         notes.value = history.value.pop()!
     }
 
     const redo = () => {
         if (!future.value.length) return
 
-        history.value.push(structuredClone(toRaw(notes.value)))
+        history.value.push(clone(notes.value))
         notes.value = future.value.pop()!
     }
 
     const createNote = (note: Note) => {
         snapshot()
-        notes.value.push(structuredClone(note))
+        notes.value.push(clone(note))
     }
 
     const replaceNote = (id: string, newNote: Note) => {
@@ -72,7 +71,7 @@ export const useNotesStore = defineStore('notes', () => {
         if (index === -1) return
 
         snapshot()
-        notes.value[index] = structuredClone(newNote)
+        notes.value[index] = clone(newNote)
     }
 
     const deleteNote = (id: string) => {

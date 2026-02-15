@@ -6,12 +6,15 @@ import { useNoteForm } from '~/composables/useNoteForm'
 const {
   title,
   todos,
+  errorMessage,
   addTodo,
   removeTodo,
   updateTodoText,
   toggleTodo,
   save,
-  cancel
+  cancel,
+  undo,
+  redo
 } = useNoteForm()
 const breadcrumbs = [
   { label: 'Главная', to: '/' },
@@ -26,7 +29,10 @@ const breadcrumbs = [
   <NoteForm
       :title="title"
       :todos="todos"
+      :error="errorMessage"
       @update:title="val => title = val"
+      @undo="undo"
+      @redo="redo"
       @add-todo="addTodo"
       @remove-todo="removeTodo"
       @update-todo-text="updateTodoText"

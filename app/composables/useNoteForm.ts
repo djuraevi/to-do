@@ -1,17 +1,20 @@
-import { ref } from 'vue'
-import { useNotesStore } from '~/stores/notes'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import type { Note } from '~/types/note'
+import { useNotesStore } from '~/stores/notes'
+import { useUndoRedo } from './useUndoRedo'
+import { useKeyboardShortcuts } from './useKeyboardShortcuts'
+import type { Note, Todo } from '~/types/note'
 
 export const useNoteForm = (initialNote?: Note) => {
     const router = useRouter()
-    const notesStore = useNotesStore()
+    const store = useNotesStore()
 
-    const title = ref(initialNote?.title ?? '')
+    const errorMessage = ref<string | null>(null)
 
-    const todos = ref(
-        initialNote
-            ? structuredClone(toRaw(initialNote.todos))
+    const initialState = {
+        title: initialNote?.title ?? '',
+        todos: initialNote
+            ? JSON.parse(JSON.stringify(initialNote.todos))
             : [
                 {
                     id: crypto.randomUUID(),
@@ -19,10 +22,26 @@ export const useNoteForm = (initialNote?: Note) => {
                     completed: false
                 }
             ]
-    )
+    }
+
+    const { state, snapshot, undo, redo } =
+        useUndoRedo(initialState)
+
+    useKeyboardShortcuts(undo, redo)
+
+    const title = computed({
+        get: () => state.value.title,
+        set: (val: string) => {
+            snapshot()
+            state.value.title = val
+        }
+    })
+
+    const todos = computed(() => state.value.todos)
 
     const addTodo = () => {
-        todos.value.push({
+        snapshot()
+        state.value.todos.push({
             id: crypto.randomUUID(),
             text: '',
             completed: false
@@ -30,36 +49,53 @@ export const useNoteForm = (initialNote?: Note) => {
     }
 
     const removeTodo = (id: string) => {
-        todos.value = todos.value.filter(t => t.id !== id)
+        snapshot()
+        state.value.todos =
+            state.value.todos.filter(t => t.id !== id)
     }
 
-    const updateTodoText = (payload: { id: string; text: string }) => {
-        const todo = todos.value.find(t => t.id === payload.id)
-        if (!todo) return
-        todo.text = payload.text
+    const updateTodoText = (payload: {
+        id: string
+        text: string
+    }) => {
+        snapshot()
+        const todo = state.value.todos.find(
+            t => t.id === payload.id
+        )
+        if (todo) todo.text = payload.text
     }
 
     const toggleTodo = (id: string) => {
-        const todo = todos.value.find(t => t.id === id)
-        if (!todo) return
-        todo.completed = !todo.completed
+        snapshot()
+        const todo = state.value.todos.find(
+            t => t.id === id
+        )
+        if (todo) todo.completed = !todo.completed
+    }
+
+    const validate = () => {
+        if (!state.value.title.trim()) {
+            errorMessage.value = 'Название заметки обязательно'
+            return false
+        }
+
+        errorMessage.value = null
+        return true
     }
 
     const save = () => {
-        if (!title.value.trim()) return
+        if (!validate()) return
 
         const prepared: Note = {
             id: initialNote?.id ?? crypto.randomUUID(),
-            title: title.value.trim(),
-            todos: structuredClone(
-                toRaw(todos.value).filter(t => t.text.trim())
-            )
+            title: state.value.title.trim(),
+            todos: state.value.todos.filter(t => t.text.trim())
         }
 
         if (initialNote) {
-            notesStore.replaceNote(initialNote.id, prepared)
+            store.replaceNote(initialNote.id, prepared)
         } else {
-            notesStore.createNote(prepared)
+            store.createNote(prepared)
         }
 
         router.push('/')
@@ -72,10 +108,13 @@ export const useNoteForm = (initialNote?: Note) => {
     return {
         title,
         todos,
+        errorMessage,
         addTodo,
         removeTodo,
         updateTodoText,
         toggleTodo,
+        undo,
+        redo,
         save,
         cancel
     }
